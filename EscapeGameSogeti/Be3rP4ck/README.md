@@ -65,7 +65,7 @@ That's a *huge* hint. We go this way. We can extract the zlib part with binwalk 
 ```
 mitsurugi@dojo:~/chall/ESCAPE$ cd _Be3rP4ck.extracted/
 mitsurugi@dojo:~/chall/ESCAPE/_Be3rP4ck.extracted$ ls
-0.elf  20C0  20C0.zlib  xortool
+0.elf  20C0  20C0.zlib 
 mitsurugi@dojo:~/chall/ESCAPE/_Be3rP4ck.extracted$ file 20C0
 20C0: data
 mitsurugi@dojo:~/chall/ESCAPE/_Be3rP4ck.extracted$ xxd 20C0 | head
@@ -130,6 +130,7 @@ Some GO program. Yikes! Go programs tend to be statically linked (read: very big
 ### Reversing some go
 Let dive into the joy of dissasembly. In GO, you don't reverse the main() function. The main function in go is just here to setup things, afjust some others etc.. In GO, you search the main.main() function.
 The main.main function is not really hard to follow:
+
 ![](IDA_main.main.png)
 
 You can see on the right the call to panic() if osArgs is different than 2. If we follow the left, we have a call to main\_sogehash function. The output of this function is compared to 0x4E, then runtime\_eqstring is called (runtime\_eqstring is basically strcmp() ).
@@ -335,4 +336,6 @@ mitsurugi@dojo:~/chall/ESCAPE$
 And it was a first blood!
 
 ## Outro
-I didn't take the time to watch wath was there in the first part. In CTF you run for flag. A friend told me once: "To solve crackme, you just have to understand enough in order to bruteforce the rest"
+I didn't take the time to watch wath was there in the first part. In CTF you run for flag. A friend told me once: "*To solve crackme, you just have to understand enough in order to bruteforce the rest*"
+
+"""Courage doesn't always roar, sometimes it's the quiet voice at the end of the day whispering 'I will try again tomorrow'"""
