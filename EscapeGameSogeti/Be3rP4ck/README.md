@@ -1,6 +1,6 @@
 # Be3rP4ck
 
-This is a crackme, and we have to find the flag. I was the first to solve this one, I think I was lucky for it because I spotted a little thing which make me avoid the first part at all.
+This is a crackme, and we have to find the flag. I think I was lucky for this one because I spotted a little thing which permits me to avoid the first part of this crackme.
 
 
 ## Step 1 - Some C and zero reversing skills
@@ -48,7 +48,7 @@ l%<r2:ug=1X/sU@d
 GCC: (Debian 6.3.0-18+deb9u1) 6.3.0 20170516
 (...)
 ```
-Before reversing, things got my attention. Did you see the 'inflate failed' message? And did you see the 'Well... played?' message?
+Before reversing, things got my attention (no, not the SOGETI repetition). Did you spot the 'inflate failed' message? And did you see the 'Well... played?' message?
 Let try something:
 ```bash
 mitsurugi@dojo:~/chall/ESCAPE$ binwalk Be3rP4ck
@@ -82,7 +82,7 @@ mitsurugi@dojo:~/chall/ESCAPE/_Be3rP4ck.extracted$ xxd 20C0 | head
 mitsurugi@dojo:~/chall/ESCAPE/_Be3rP4ck.extracted$
 ```
 
-That's a lot of 'ELF' in this file. If you have reversed a lot of ELF file, you should have figured that you have a lot of zeroes in it. And zero is the identity with XOR. So, this file could be an ELF file xored with the key 'ELF'. We can use xortool <https://github.com/hellman/xortool> to check this for us:
+That's a lot of 'ELF' in this file. If you have reversed some ELF files, you should have figured that you have a lot of zeroes in it. And zero is the identity with XOR. So, this file could be an ELF file xored with the key 'ELF' (wild guess). We can use xortool <https://github.com/hellman/xortool> to check this for us:
 ```bash
 mitsurugi@dojo:~/chall/ESCAPE/_Be3rP4ck.extracted$ ./xortool/xortool/xortool 20C0 -c 00
 The most probable key lengths:
@@ -106,9 +106,9 @@ xortool_out/0.out: ELF 64-bit LSB executable, x86-64, version 1 (SYSV), statical
 mitsurugi@dojo:~/chall/ESCAPE/_Be3rP4ck.extracted$
 ```
 
-And so the first step of this challenge has been solved with absolutely 0 reversing skills.
+And the first step of this challenge has been solved in minutes with absolutely 0 reversing skills used.
 
-## Step 2 - Go for victory
+## Step 2 - "Go" for victory
 Let go for a reco:
 ```bash
 mitsurugi@dojo:~/chall/ESCAPE/_Be3rP4ck.extracted/xortool_out$ chmod +x 0.out 
@@ -125,10 +125,10 @@ main.main()
 mitsurugi@dojo:~/chall/ESCAPE/_Be3rP4ck.extracted/xortool_out$
 ```
 
-Some GO program. Yikes! Go programs tend to be statically linked (read: very big). We know that we took the right path because the first line is: "Give me the real flag".
+Some GO program. Yikes! Go programs tend to be statically linked (read: very big). We know that we took the right path because the first line is: "Give me the real flag", and the path "re/stage2", stage2 means that we solve stage1 already.
 
 ### Reversing some go
-Let dive into the joy of dissasembly. In GO, you don't reverse the main() function. The main function in go is just here to setup things, afjust some others etc.. In GO, you search the main.main() function.
+Let dive into the joy of dissasembly. In GO, you don't reverse the main() function. The main function in go is just here to setup things, adjust some others etc.. In GO, you search the main.main() function.
 The main.main function is not really hard to follow:
 
 ![](IDA_main.main.png)
@@ -269,7 +269,7 @@ rcx            0x2	2
 In go, strings are not null terminated. So, if we look closely, we can see that the string "1f4e509605c9f4bf22f4bf22a5c9fe23bbfee5dd22ffdde5fb22aafedcdd22f5f1d6f0a4a5a589" is exactly 0x4e character long... 
 
 ## Step 3 - Cracking time
-Reversing the sogehash function is not really hard. Nothing really fancy, and I reimplemented it under python:
+Reversing the sogehash function is not really hard. I reimplemented it under python:
 
 ```python
 #! /usr/bin/python3
@@ -327,15 +327,16 @@ for i in range(int(len(result)/2)):
 print("[+] Here is the flag: %s"% prefix)
 ```
 
-And in less than in a second:
+And in less than in second:
 ```bash
 mitsurugi@dojo:~/chall/ESCAPE$ ./sogehash2.py 
 [+] Here is the flag: SCE{Th1s_1s_th3_r3al_fl4g_w3ll_d0ne!!!}
 mitsurugi@dojo:~/chall/ESCAPE$
 ```
-And it was a first blood!
+And it was a first blood! The time saved in step1 has been usefull.
 
 ## Outro
-I didn't take the time to watch wath was there in the first part. In CTF you run for flag. A friend told me once: "*To solve crackme, you just have to understand enough in order to bruteforce the rest*"
+I didn't take the time to watch what was there in the first part. In CTF you run for flag. A friend told me once: "*To solve crackme, you just have to understand enough in order to bruteforce the rest*"
 
-"""Courage doesn't always roar, sometimes it's the quiet voice at the end of the day whispering 'I will try again tomorrow'"""
+Quote of the day:
+*Courage doesn't always roar, sometimes it's the quiet voice at the end of the day whispering 'I will try again tomorrow'*
