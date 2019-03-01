@@ -66,7 +66,7 @@ And its exactly what we search. This function decodes some bytes, then put an ad
 
 Now, let go dynamic (gdb powah!) and follow everything.
 ### opcodes
-Opcode are read from address two bytes by two bytes:
+Opcode are read from address two bytes by two bytes, starting at this offset:
 ```bash
 gdb$ x/8gx 0x00007FFFFFFFDDD0
 0x7fffffffddd0: 0x080b0401090108ff      0x0001090b04010914
@@ -91,10 +91,10 @@ All functions are here:
 0x555555756100: 0x0000555555554c7f      0x0000555555554d4a
 ```
 
-We can decode all opcodes to learn their meanings.
+We can decode all opcodes to learn their meanings. They are really short and really understandable.
 
 ### Program logic
-Do you remember the two strcpy() at the beginning? The first one copies the opcodes, the second one copy a string:
+Do you remember the two strncpy() at the beginning? The first one copy the opcodes, the second one copy a string:
 ```bash
 gef➤  x/4gx $rsi
 0x555555756070: 0x7716753476505e76      0x58612340536d644d
@@ -121,7 +121,7 @@ data = dump.read()
 data = data+b'\x00'
 dump.close()
 
-def read\_opcode(opcode,addr):
+def readopcode(opcode,addr):
     f = opcode>>0xa
     arg1 = (opcode >> 8) & 3
     arg2 = (opcode & 0xff)
@@ -132,7 +132,7 @@ def read\_opcode(opcode,addr):
         (...long list of elif)
 ```
 
-Each function is understood and decoded. This VM has two registers, R1 and R2, a compare operation, a jump, XOR, an instruction pointer and some memory access.
+Each function is understood and decoded. This VM has two registers, R1 and R2, a compare operation with a compare flag, a jump, XOR, an instruction pointer and some memory access.
 In the end we can manage to have a flat representation of the opcodes:
 ```bash
 mitsurugi@dojo:~/chall/ESCAPE$ ./fetchdecode.py 
@@ -162,7 +162,8 @@ addr: 0xa, func 0x0000555555554af0
 
 ### Cracking the VM
 Once all opcodes are known, we see that our input is xored with a constant, then compared to the reference string seen before. This reference string is 29 char long, so we guess that the flag should be 29 char long.
-All bytes of our key is xored, the result is checked only in the end. That's easy for us: let's trace the program, see all xored bytes and print them. The 0x0000555555554b9b function is used to XOR the bytes. So we just can print them:
+
+It's worth noted that all bytes of our key is xored whatever if it's right or wrong, the result is checked only in the end. That's easy for us: let's trace the program, see all xored bytes and print them. The 0x0000555555554b9b function is used to XOR the bytes. So we just can print them:
 ```bash
 gef➤  x/30i 0x0000555555554b9b
    0x555555554b9b:	push   rbp
@@ -216,6 +217,7 @@ eax            0x2a	0x2a
 gef➤
 ```
 
+My key is 29x times the letter 'A', 0x41.
 Just concatenate all esi value, XOR them with the reference string, and:
 ```bash
 mitsurugi@dojo:~/chall/ESCAPE$ ./solve.py 
@@ -224,7 +226,7 @@ mitsurugi@dojo:~/chall/ESCAPE$ #wut? oO
 ```
 
 ## Last step - patch
-At this point, I was very surprised. The flag miss the } character, and is not 29 characters long. It doesn't flag on the platform. What was more strange:
+At this point, I was very surprised. The flag doesn't have the } character at the end, and is not 29 characters long. And yes, this flag doesn't work on the platform. What was more strange:
 ```bash
 mitsurugi@dojo:~/chall/ESCAPE$ ./BadVM 
 ### BadVM 0.1 ###
@@ -245,14 +247,14 @@ Bien joué! :)
 mitsurugi@dojo:~/chall/ESCAPE$
 ```
 
-Well, multiples password give the "goodboy" message. Either I didn't understand anything, either something is wrong. I looked at the scoreboard and four teams allready solved it. something must be wrong in my works.
+Well, multiples password give the "goodboy" message. Either my minds are blown after fex hours of reverse, either something is wrong. I looked at the scoreboard and four teams allready solved it. Something must be wrong in my works.
 
-My gdb script output only 20 chars to be xored with the reference string. That's weird. After few hours spent on this crakme for decoding opcodes, a little light lit on my mind about a constant I saw. Remember the line:
+My gdb script output only 20 chars to be xored with the reference string. That's the weird point. After hours spent on this crakme for decoding opcodes, a little light just lit on my mind about a constant I saw. Remember the line in the disass-ed opcodes:
 ```bash
 addr: 0x4, func 0x0000555555554af0
 0x914:   [2] MOV R1,0x14
 ```
-in the VM? 0x14 in hex is 20. This is put at the beginning of a loop. Maybe the VM has a bug. I hex-edit the ELF file to change this value to 0x1D and re-run it. Replayed the gdb script, and surprise surprise, we now have 29 chars to XOR with the reference string.
+0x14 in hex is 20. This is put at the beginning of a loop. Maybe the VM has a bug? I hex-edit the ELF file to change this value to 0x1D and re-run it. Replayed the gdb script, and surprise surprise, we now have 29 chars to XOR with the reference string.
 
 ```python
 #! /usr/bin/python3
@@ -275,7 +277,7 @@ SCE{1_4m_not_4n_is4_d3s1yn3r}
 mitsurugi@dojo:~/chall/ESCAPE$
 ```
 
-I've tell the orgs, and they told me that the first version of BadVM file is buggy, they allready have changed the crackme. That was very fun to crack anyway :)
+I've asked the orgs for this behavior, and they told me that the first version of BadVM file was buggy, and they allready have changed the crackme. That was very fun to crack anyway :)
 
 Quote of the day:
 *Failure is the first step to success.*
